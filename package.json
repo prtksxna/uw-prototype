@@ -1,0 +1,28 @@
+{
+  "name": "uw-prototype",
+  "version": "0.0.1",
+  "description": "",
+  "main": "u.html",
+  "directories": {
+    "doc": "docs"
+  },
+  "dependencies": {
+    "jsdoc": "^3.3.2"
+  },
+  "devDependencies": {
+    "oojs-ui": "^0.11.6"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:prtksxna/uw-prototype.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/prtksxna/uw-prototype/issues"
+  },
+  "homepage": "https://github.com/prtksxna/uw-prototype"
+}

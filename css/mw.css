@@ -1,0 +1,20 @@
+.container {
+	margin-left: 150px;
+	border-left: 1px solid #A7D7F9;
+	background: #fff;
+	padding: 20px;
+	height: 100%;
+	float: left;
+	width: 100%;
+	padding-bottom: 20px;
+	overflow: auto;
+}
+
+h1 + small {
+	display: block;
+	margin-top: -15px;
+}
+
+.uw-uploader {
+	padding: 20px;
+}

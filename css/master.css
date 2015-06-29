@@ -1,0 +1,21 @@
+html, body {
+	height: 100%;
+}
+
+body {
+	font: 0.8em Helvetica, Aral, sans-serif;
+	background: #f6f6f6;
+	margin: 0;
+	padding: 0;
+}
+
+h1 {
+	font: 2.2em Georgia;
+	font-weight: normal;
+	padding-bottom: 2px;
+	border-bottom: 1px solid #aaa;
+}
+
+h1, h2, h3, h4 {
+	margin-top: 0;
+}

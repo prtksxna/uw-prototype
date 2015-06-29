@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">// Testing
+var k;
+
+$( function () {
+	k = new UW.Uploader( {
+		container: &#39;tester&#39;
+	} );
+} );
+// Testing
+
+
+
+var UW = UW || {};
+
+<span id='UW-Uploader-cfg-containerType'><span id='UW-Uploader-cfg-container'><span id='UW-Uploader'>/**
+</span></span></span> * Uploader interface for a single file. Can be used in a larger list of
+ * uploads to control bulk edits.
+ *
+ * @class
+ * @param {Object} [config] Configuration options
+ * @cfg {string} [container] ID of the container element
+ * @cfg {string} [containerType] Type of container - single, dialog or bulk
+ */
+UW.Uploader = function UWUploader ( config ) {
+	// Config stuff
+	// TODO: Does the config have a container?
+	// TODO: Fill config with defauls
+	this.container = config.container;
+	this.$container = $( &#39;#&#39; + this.container ).addClass( &#39;uw-uploader&#39; );
+	this.containerType = config.containerType || &#39;single&#39;;
+	this.bulk = config.bulk || undefined;
+
+	// Mixin constructors
+	OO.EventEmitter.call( this );
+
+	// Create elements
+	this.$uploadForm = $( &#39;&lt;div&gt;&#39; )
+		.addClass( &#39;uw-upload-form&#39; )
+		.appendTo( this.$container );
+	this.$detailsForm = $( &#39;&lt;div&gt;&#39; )
+		.addClass( &#39;uw-details-form&#39; )
+		.appendTo( this.$container )
+		.hide();
+	this.$detailsFormUpload = $( &#39;&lt;div&gt;&#39; )
+		.addClass( &#39;uw-details-form-upload&#39; )
+		.appendTo( this.$detailsForm );
+	this.$detailsFormMetadata = $( &#39;&lt;div&gt;&#39; )
+		.addClass( &#39;uw-details-form-metadata&#39; )
+		.appendTo( this.$detailsForm );
+	this.$detailsFormLicense = $( &#39;&lt;div&gt;&#39; )
+		.addClass( &#39;uw-details-form-license&#39; )
+		.appendTo( this.$detailsForm );
+	this.$waitForSave = $( &#39;&lt;div&gt;&#39; )
+		.addClass( &#39;uw-wait-for-save&#39; )
+		.appendTo( this.$container )
+		.hide();
+	this.$usage = $( &#39;&lt;div&gt;&#39; )
+		.addClass( &#39;uw-usage&#39; )
+		.appendTo( this.$container )
+		.hide();
+
+	this.renderUploadForm();
+}
+
+/* Setup */
+OO.mixinClass( UW.Uploader, OO.EventEmitter );
+
+/* Properties */
+
+<span id='UW-Uploader-property-state'>/**
+</span> * @property state {string} Current state
+ */
+UW.Uploader.prototype.state = &#39;upload&#39;;
+
+<span id='UW-Uploader-property-containerType'>/**
+</span> * @property containerType {string} This could be - single, dialog or bulk
+ */
+UW.Uploader.prototype.containerType = &#39;single&#39;;
+
+
+/* Events */
+
+<span id='UW-Uploader-event-fileUploaded'>/**
+</span> * @event fileUploaded
+ *
+ * Emitted when the file is uploaded
+ *
+ * @param {Object} details of where the file was uploaded etc.
+ */
+
+<span id='UW-Uploader-event-fileSaved'>/**
+</span> * @event fileSaved
+ *
+ * Emitted when the file is saved
+ *
+ * @param {Object} details of where the file was uploaded etc.
+ */
+
+<span id='UW-Uploader-event-stateChange'>/**
+</span> * @event stateChange
+ *
+ * Emitted when the state of the uploader changes.
+ * Could be -
+ * * upload
+ * * details
+ * * usage
+ *
+ * @param {String} name of the state
+ */
+
+/* Methods */
+
+<span id='UW-Uploader-method-renderUploadForm'>/**
+</span> * Renders the file upload form
+ * @returns {OO.ui.FormLayout} element
+ */
+UW.Uploader.prototype.renderUploadForm = function () {
+	var self = this;
+
+	self.uploadForm = {}
+	self.uploadForm.file = new OO.ui.SelectFileWidget();
+
+	self.uploadForm.submit = new OO.ui.Widget();
+	if ( self.containerType !== &#39;dialog&#39; ) {
+		self.uploadForm.submit = new OO.ui.ButtonWidget( {
+			label: &#39;Upload&#39;,
+			flags: [ &#39;constructive&#39;, &#39;primary&#39; ]
+		} );
+	}
+
+	self.uploadForm.fieldset = new OO.ui.ActionFieldLayout(
+		self.uploadForm.file,
+		self.uploadForm.submit,
+		{
+			label: &#39;Upload file&#39;,
+			align: &#39;top&#39;
+		}
+	);
+
+	self.uploadForm.form = new OO.ui.FormLayout( { items: [ self.uploadForm.fieldset ] } );
+
+	// TODO: How do I get the form to submit?
+	// TODO: Can I do anything buth .bind()?
+	self.uploadForm.submit.on( &#39;click&#39;, self.initFileUpload.bind( self ) );
+
+	this.$uploadForm.append( self.uploadForm.form.$element );
+	return self.uploadForm.form;
+};
+
+<span id='UW-Uploader-method-initFileUpload'>/**
+</span> * Initialize file upload
+ */
+UW.Uploader.prototype.initFileUpload = function () {
+	var self = this;
+
+	self.getFileData();
+	self.uploadFile();
+
+	self.$uploadForm.hide();
+	self.renderDetailsForm();
+
+	self.emit( &#39;stateChange&#39;, &#39;details&#39; );
+};
+
+
+<span id='UW-Uploader-method-uploadFile'>/**
+</span> * Upload file
+ * TODO: Should use mw.UploadWizardUpload.js
+ */
+UW.Uploader.prototype.uploadFile = function () {
+	var self = this;
+
+	console.log( &#39;Uploading file...&#39; );
+	setTimeout( function () {
+		self.emit( &#39;fileUploaded&#39;, {
+			url: &#39;cat.png&#39;
+		} );
+	}, 2000 ); // Arbitrary upload time
+};
+
+<span id='UW-Uploader-method-getFileData'>/**
+</span> * Get the file&#39;s meta data
+ * TODO: Should use mw.UploadWizardUpload.js
+ */
+UW.Uploader.prototype.getFileData = function () {
+	console.log( &#39;Getting file data....&#39; );
+
+	var fileDisplayElement = this.getFileDisplayElement();
+	return {
+		name: this.uploadForm.file.getValue().name,
+		date: this.uploadForm.file.getValue().lastModified,
+		$el: fileDisplayElement
+	};
+};
+
+<span id='UW-Uploader-method-getFileDisplayElement'>/**
+</span> * Get the file&#39;s display element
+ * A canvas element with the file rendered or something
+ * TODO: Should use mw.UploadWizardUpload.js
+ */
+UW.Uploader.prototype.getFileDisplayElement = function () {
+	return $( &#39;&lt;img&gt;&#39; ).attr( &#39;src&#39;, &#39;cat.png&#39; );
+};
+
+<span id='UW-Uploader-method-renderDetailsForm'>/**
+</span> * Renders the details form
+ * @returns {OO.ui.FormLayout} element
+ */
+UW.Uploader.prototype.renderDetailsForm = function () {
+	var self = this,
+		fileDetails = self.getFileData();
+
+	self.detailsForm = {};
+
+	// File preview and actions
+	self.detailsForm.filePreview = fileDetails.$el;
+	self.detailsForm.fileProgress = new OO.ui.ProgressBarWidget();
+
+	self.detailsForm.fileCancel = new OO.ui.Widget();
+	self.detailsForm.fileSave = new OO.ui.Widget();
+
+	if ( self.containerType !== &#39;dialog&#39; ) {
+		self.detailsForm.fileCancel = new OO.ui.ButtonWidget( {
+			label: &#39;Cancel&#39;,
+			flags: &#39;destructive&#39;,
+			framed: true
+		} ).on( &#39;click&#39;, self.showCancelDialog.bind( self ) );
+		self.detailsForm.fileSave = new OO.ui.ButtonWidget( {
+			label: &#39;Save&#39;,
+			flags: [ &#39;constructive&#39;, &#39;primary&#39; ],
+			disabled: true
+		} ).on( &#39;click&#39;, self.saveFile.bind( self ) );
+	}
+
+	self.detailsForm.bulkToggleLabel = new OO.ui.Widget();
+	self.detailsForm.bulkToggle = new OO.ui.Widget();
+	if ( self.containerType === &#39;bulk&#39; ) {
+		self.detailsForm.bulkToggle = new OO.ui.ToggleSwitchWidget().on( &#39;change&#39;, self.select.bind( self ) );
+		self.detailsForm.bulkToggleLabel = new OO.ui.LabelWidget( { label: &#39;Bulk Edit&#39; });
+	}
+
+
+
+	self.$detailsFormUpload.append(
+		self.detailsForm.filePreview,
+		self.detailsForm.fileProgress.$element,
+		&#39;&lt;br&gt;&#39;,
+		self.detailsForm.fileCancel.$element,
+		self.detailsForm.fileSave.$element,
+		self.detailsForm.bulkToggleLabel.$element,
+		self.detailsForm.bulkToggle.$element
+
+	);
+
+	self.on( &#39;fileUploaded&#39;, function ( d ) {
+		self.detailsForm.fileProgress.setProgress( 100 );
+		self.detailsForm.fileSave.setDisabled( false );
+	} );
+
+
+	// File metadata
+	self.detailsForm.name = new OO.ui.TextInputWidget( {
+		value: fileDetails.name,
+		indicator: &#39;required&#39;,
+		required: true,
+		validate: /.+/
+	} );
+
+	self.detailsForm.date = new OO.ui.TextInputWidget( {
+		value: new Date( fileDetails.date ).toDateString(),
+		indicator: &#39;required&#39;,
+		required: true,
+		validate: /.+/
+	} );
+	self.detailsForm.language = new OO.ui.DropdownInputWidget( {
+		label: &#39;Pick langauge&#39;,
+		options: [
+			{ data: &#39;en&#39;, label: &#39;English&#39; },
+			{ data: &#39;hi&#39;, label: &#39;Hindi&#39; },
+		]
+	} );
+	self.detailsForm.description = new OO.ui.TextInputWidget( {
+		indicator: &#39;required&#39;,
+		required: true,
+		validate: /.+/,
+		multiline: true,
+		autosize: true
+	} );
+	self.detailsForm.addDescription = new OO.ui.ButtonWidget( {
+		label: &#39;Add another language&#39;,
+		icon: &#39;add&#39;,
+		flags: &#39;constructive&#39;,
+	} );
+	self.detailsForm.categories = new OO.ui.ComboBoxWidget( {
+		icon: &#39;tag&#39;,
+		label: &#39;Pick langauge&#39;,
+		menu: {
+			items: [
+				new OO.ui.MenuOptionWidget( {
+					data: &#39;wm-pres&#39;,
+					label: &#39;Wikimedia Presentation&#39;
+				} ),
+				new OO.ui.MenuOptionWidget( {
+					data: &#39;animals&#39;,
+					label: &#39;Wild Animals&#39;
+				} ),
+			]
+		}
+	} );
+
+
+	self.detailsForm.metadataFieldset = new OO.ui.FieldsetLayout( { label: &#39;Details&#39; } );
+	self.detailsForm.metadataFieldset.addItems( [
+		new OO.ui.FieldLayout( self.detailsForm.name, {
+			label: &#39;Name&#39;,
+			align: &#39;top&#39;
+		} ),
+		new OO.ui.FieldLayout( self.detailsForm.date, {
+			label: &#39;Date&#39;,
+			align: &#39;top&#39;
+		} ),
+		new OO.ui.FieldLayout( self.detailsForm.language, {
+			label: &#39;Language&#39;,
+			align: &#39;top&#39;
+		} ),
+		self.detailsForm.description,
+		new OO.ui.FieldLayout( self.detailsForm.addDescription ),
+		new OO.ui.FieldLayout( self.detailsForm.categories, {
+			label: &#39;Categories&#39;,
+			align: &#39;top&#39;
+		} )
+	] );
+	self.detailsForm.metadataForm = new OO.ui.FormLayout( {
+		items: [ self.detailsForm.metadataFieldset ]
+	} );
+
+	self.$detailsFormMetadata.append( self.detailsForm.metadataForm.$element );
+
+
+	// License
+	self.detailsForm.ownerType = new OO.ui.ToggleSwitchWidget( { value: true } );
+	self.detailsForm.ownerTypeLabel = new OO.ui.LabelWidget( { label: &#39;This file is my own work&#39; } );
+	self.detailsForm.ownerName = new OO.ui.TextInputWidget( {
+		indicator: &#39;required&#39;,
+		required: true,
+		validate: /.+/,
+		classes: [ &#39;license_name_input&#39; ],
+		value: &#39;Prtksxna&#39;
+	} );
+	self.detailsForm.license = new OO.ui.ComboBoxWidget( {
+		icon: &#39;tag&#39;,
+		label: &#39;Pick a license&#39;,
+		classes: [ &#39;license_name_license&#39; ],
+		menu: {
+			items: [
+				new OO.ui.MenuOptionWidget( {
+					data: &#39;CC-BY-SA&#39;,
+					label: &#39;Creative Commons Attribution Share Alike&#39;
+				} ),
+				new OO.ui.MenuOptionWidget( {
+					data: &#39;CC-BY&#39;,
+					label: &#39;Creative Commons Attribution&#39;
+				} ),
+			]
+		}
+	} );
+	self.$detailsFormLicense.append(
+		$( &#39;&lt;h4&gt;&#39; ).text( &#39;License&#39; ),
+		self.detailsForm.ownerType.$element,
+		self.detailsForm.ownerTypeLabel.$element,
+		&#39;&lt;br&gt;&#39;,
+		&#39;&lt;br&gt;&#39;,
+		&#39;I&#39;,
+		self.detailsForm.ownerName.$element,
+		&#39;, the copyright holder of this work, irrevocably grant anyone the right to use this work under the&#39;,
+		self.detailsForm.license.$element
+	);
+
+
+	self.$detailsForm.show();
+};
+
+<span id='UW-Uploader-method-showCancelDialog'>/**
+</span> * Confirm whether or not to cancel the upload
+ */
+UW.Uploader.prototype.showCancelDialog = function () {
+	var self = this;
+	var messageDialog = new OO.ui.MessageDialog();
+	var windowManager = new OO.ui.WindowManager();
+	$( &#39;body&#39; ).append( windowManager.$element );
+	windowManager.addWindows( [ messageDialog ] );
+
+	windowManager.openWindow( messageDialog, {
+		title: &#39;Are you sure you want to cancel this upload?&#39;,
+		message: &#39;This action cannot be undone.&#39;
+	} ).then( function ( opened ) {
+		opened.then( function ( closing, data ) {
+			if ( data.action === &#39;accept&#39; ) {
+				self.cancel();
+			}
+		} );
+	} );
+};
+
+<span id='UW-Uploader-method-cancel'>/**
+</span> * Cancel upload
+ * Removed the form and deletes the current object if its part of
+ * a bulk editor, TODO: otherwise goes back to the upload state.
+ */
+UW.Uploader.prototype.cancel = function () {
+	// If part of bulk
+	this.$container.html( &#39;&#39; );
+	delete this; // TODO: Wat?
+
+	// If not part of bulk
+	// TODO: Swtich back to upload form
+};
+
+<span id='UW-Uploader-method-saveFile'>/**
+</span> * Save file
+ */
+UW.Uploader.prototype.saveFile = function () {
+	var self = this;
+
+	// TODO: Validations
+	// TODO: Get all details and post to server
+	// TODO: Should use mw.UploadWizardUpload.js
+	setTimeout( function () {
+		self.emit( &#39;fileSaved&#39;, {
+			internalUrl: &#39;cat.png&#39;,
+			externalUrl: &#39;http://upload.wikimedia.org/cat.png&#39;
+		} );
+	}, 1000 ); // Arbitrary upload time
+
+	self.on( &#39;fileSaved&#39;, self.renderUsage.bind( self ) );
+
+	self.renderWaitForSave();
+};
+
+<span id='UW-Uploader-method-renderWaitForSave'>/**
+</span> * Render the waiting part
+ */
+UW.Uploader.prototype.renderWaitForSave = function () {
+	var self = this;
+
+	self.$detailsForm.hide();
+
+	self.waitForSave = {};
+	self.waitForSave.progress = new OO.ui.ProgressBarWidget();
+	self.$waitForSave
+		.show()
+		.append(
+			self.detailsForm.filePreview, // TODO: Dirty
+			$( &#39;&lt;div&gt;&#39; ).append(
+				$( &#39;&lt;p&gt;&#39; ).text( &#39;Saving file&#39; ),
+				self.waitForSave.progress.$element
+			)
+		);
+};
+
+
+<span id='UW-Uploader-method-renderUsage'>/**
+</span> * Render the usage
+ */
+UW.Uploader.prototype.renderUsage = function ( d ) {
+	var self = this;
+
+	self.emit( &#39;stateChange&#39;, &#39;usage&#39; );
+
+	self.$waitForSave.hide();
+	self.usage = {};
+	self.usage.doneLabel = new OO.ui.LabelWidget( { label: &#39;This file was successfully uploaded&#39; } );
+	self.usage.onWikiLabel = new OO.ui.LabelWidget( { label: &#39;On wiki use&#39; } );
+	self.usage.onWikiInput = new OO.ui.TextInputWidget( {
+		value: &#39;[[File:&#39; + d.internalUrl + &#39;]]&#39;
+	} );
+	self.usage.offWikiLabel = new OO.ui.LabelWidget( { label: &#39;Off wiki use&#39; } );
+	self.usage.offWikiInput = new OO.ui.TextInputWidget( {
+		value: d.externalUrl
+	} );
+
+	self.usage.dismiss = new OO.ui.Widget();
+	if ( self.containerType !== &#39;dialog&#39; ) {
+		self.usage.dismiss = new OO.ui.ButtonWidget( {
+			label: &#39;Dismiss&#39;,
+			flags: &#39;destructive&#39;,
+		} ).on( &#39;click&#39;, self.dismiss.bind( self ) );
+	}
+
+	self.$usage
+		.show()
+		.append(
+			self.detailsForm.filePreview, // TODO: Dirty
+			$( &#39;&lt;div&gt;&#39; ).append(
+				self.usage.doneLabel.$element,
+				&#39;&lt;br&gt;&#39;,
+				&#39;&lt;br&gt;&#39;,
+				self.usage.onWikiLabel.$element,
+				self.usage.onWikiInput.$element,
+				&#39;&lt;br&gt;&#39;,
+				self.usage.offWikiLabel.$element,
+				self.usage.offWikiInput.$element,
+				&#39;&lt;br&gt;&#39;,
+				self.usage.dismiss.$element
+			)
+		);
+
+};
+
+<span id='UW-Uploader-method-dismiss'>/**
+</span> * Dismiss the entire thing
+ */
+UW.Uploader.prototype.dismiss = function () {
+	// If part of bulk
+	this.$container.html( &#39;&#39; );
+	delete this; // TODO: Wat?
+}
+
+
+<span id='UW-Uploader-property-'>/**
+</span> * Select this uploader if part of bulk
+ */
+UW.Uploader.prototype.select = function ( value ) {
+	if ( this.containerType !== &#39;bulk&#39; ) return false;
+	if ( value ) {
+		this.$container.addClass( &#39;uw-selected&#39; );
+	} else {
+		this.$container.removeClass( &#39;uw-selected&#39; );
+	}
+	this.emit( &#39;select&#39;, value );
+}
+</pre>
+</body>
+</html>

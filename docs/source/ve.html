@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">$( function () {
+	// Render the editor
+	var textarea = new OO.ui.TextInputWidget( {
+		multiline: true,
+		autosize: true
+	} );
+
+	var showDialog = function () {
+		var uploadDialog = new UW.UploadDialog( { size: &#39;larger&#39; } );
+		var windowManager = new OO.ui.WindowManager();
+		$( &#39;body&#39; ).append( windowManager.$element );
+		windowManager.addWindows( [ uploadDialog ] );
+		windowManager.openWindow( uploadDialog ).then( function ( opened ) {
+			opened.then( function ( closing, data ) {
+				if ( data ) {
+					textarea.setValue( &#39;[[File:&#39; + data.internalUrl + &#39;]]&#39; );
+				}
+			} );
+		} );
+	}
+
+	var insert = new OO.ui.ButtonWidget( {
+		label: &#39;Insert file&#39;,
+	} ).on( &#39;click&#39;, showDialog );
+
+
+	$( &#39;#editor&#39; ).append(
+		insert.$element,
+		textarea.$element
+	);
+} );
+</pre>
+</body>
+</html>

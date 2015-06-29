@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">// Testing
+var kw;
+
+$( function () {
+	kw = new UW.Bulk( {
+		container: &#39;uw&#39;
+	} );
+} );
+// Testing
+
+var UW = UW || {};
+
+<span id='UW-Bulk-cfg-container'><span id='UW-Bulk'>/**
+</span></span> * Uploader interface for a bulk uploads.
+ * Uses instances of UWW.Uploader
+ *
+ * @class
+ * @param {Object} [config] Configuration options
+ * @cfg {string} [container] ID of the container element
+ */
+UW.Bulk = function ( config ) {
+	// Config stuff
+	// TODO: Does the config have a container?
+	// TODO: Fill config with defauls
+	this.container = config.container;
+	this.$container = $( &#39;#&#39; + this.container ).addClass( &#39;uw-uploader&#39; );
+
+	// Create elements
+	this.$bulkform = $( &#39;&lt;div&gt;&#39; )
+		.addClass( &#39;bulkform&#39; )
+		.appendTo( this.$container );
+
+	this.$uploaders = $( &#39;&lt;div&gt;&#39; )
+		.addClass( &#39;uploaders&#39; )
+		.appendTo( this.$container );
+
+	this.idCounter = 1;
+	this.uploaders = {};
+
+	this.renderBulkForm();
+	this.addUploader();
+};
+
+<span id='UW-Bulk-method-addUploader'>/**
+</span> * Add a new instance of uploader
+ */
+UW.Bulk.prototype.addUploader = function () {
+	var self = this;
+
+	var id = &#39;uploader-&#39; + self.idCounter;
+	self.idCounter += 1;
+
+	var $uploader = $( &#39;&lt;div&gt;&#39; ).attr( &#39;id&#39;, id );
+	self.$container.prepend( $uploader );
+
+	self.uploaders[ id ] = new UW.Uploader( {
+		container: id,
+		containerType: &#39;bulk&#39;
+	} ).once( &#39;stateChange&#39;, function ( state ) {
+		if ( state === &#39;details&#39; ) {
+			self.addUploader();
+		}
+	} );
+
+};
+
+<span id='UW-Bulk-method-renderBulkForm'>/**
+</span> * Render the bulk edit form
+ */
+UW.Bulk.prototype.renderBulkForm = function () {
+	this.$bulkform.append(
+		$( &#39;&lt;h1&gt;&#39; ).text( &#39;Bulk edit&#39; )
+	);
+};
+</pre>
+</body>
+</html>

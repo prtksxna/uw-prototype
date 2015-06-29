@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">var UW = UW || {};
+
+<span id='UW-UploadDialog'>/**
+</span> * Uploader interface for a single file in a ProcessDialog
+ *
+ * @class
+ * @extends OO.ui.ProcessDialog
+ */
+UW.UploadDialog = function ( config ) {
+	UW.UploadDialog.super.call( this, config );
+}
+OO.inheritClass( UW.UploadDialog, OO.ui.ProcessDialog );
+
+<span id='UW-UploadDialog-property-title'>/**
+</span> * @property
+ */
+UW.UploadDialog.static.title = &#39;Upload file&#39;;
+
+<span id='UW-UploadDialog-property-actions'>/**
+</span> * @property
+ */
+UW.UploadDialog.static.actions = [
+	{ flags: &#39;safe&#39;, action: &#39;cancel&#39;, label: &#39;Cancel&#39;, modes: [ &#39;upload&#39;, &#39;insert&#39;, &#39;save&#39; ] },
+	{ flags: [ &#39;primary&#39;, &#39;progressive&#39; ], label: &#39;Insert media&#39;, action: &#39;insert&#39;, modes: &#39;insert&#39; },
+	{ flags: [ &#39;primary&#39;, &#39;progressive&#39; ], label: &#39;Save&#39;, action: &#39;save&#39;, modes: &#39;save&#39; },
+	{ flags: [ &#39;primary&#39;, &#39;progressive&#39; ], label: &#39;Upload&#39;, action: &#39;upload&#39;, modes: &#39;upload&#39; }
+];
+
+<span id='UW-UploadDialog-method-initialize'>/**
+</span> * @method
+ */
+UW.UploadDialog.prototype.initialize = function () {
+	UW.UploadDialog.super.prototype.initialize.call( this );
+	this.$content = $( &#39;&lt;div&gt;&#39; ).attr( &#39;id&#39;, &#39;uw-dialog-container&#39; );
+	this.$body.append( this.$content );
+
+	var self = this;
+
+	self.uploader = new UW.Uploader( {
+		container: &#39;uw-dialog-container&#39;,
+		containerType: &#39;dialog&#39;
+	} );
+	self.uploader.on( &#39;fileSaved&#39;, function ( d ) {
+		self.uploadDetails = d;
+		self.actions.setMode( &#39;insert&#39; );
+	} );
+};
+
+<span id='UW-UploadDialog-method-getBodyHeight'>/**
+</span> * @method
+ */
+UW.UploadDialog.prototype.getBodyHeight = function () {
+	return &#39;700px&#39;;
+};
+
+<span id='UW-UploadDialog-method-getSetupProcess'>/**
+</span> * @method
+ */
+UW.UploadDialog.prototype.getSetupProcess = function ( data ) {
+	return UW.UploadDialog.super.prototype.getSetupProcess.call( this, data )
+		.next( function () {
+			this.actions.setMode( &#39;upload&#39; );
+		}, this );
+};
+
+<span id='UW-UploadDialog-method-getActionProcess'>/**
+</span> * @method
+ */
+UW.UploadDialog.prototype.getActionProcess = function ( action ) {
+	var self = this;
+
+	if ( action === &#39;insert&#39; ) {
+		this.close( this.uploadDetails );
+	}
+	if ( action === &#39;upload&#39; ) {
+		self.uploader.initFileUpload();
+		self.actions.setMode( &#39;save&#39; );
+	}
+	if ( action === &#39;save&#39; ) {
+		self.actions.setMode( &#39;insert&#39; );
+		self.uploader.saveFile()
+	}
+	if ( action === &#39;cancel&#39; ) {
+		self.close();
+	}
+
+	return UW.UploadDialog.super.prototype.getActionProcess.call( this, action );
+};
+</pre>
+</body>
+</html>

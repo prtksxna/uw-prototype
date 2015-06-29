@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">$( function () {
+
+	var newFile = new OO.ui.SelectFileWidget();
+	$( &#39;.container h1&#39; ).after(
+		$( &#39;&lt;h2&gt;&#39; ).text( &#39;Add new file&#39; ),
+		newFile.$element,
+		&#39;&lt;br&gt;&#39;,
+		&#39;&lt;br&gt;&#39;,
+		&#39;&lt;br&gt;&#39;,
+		$( &#39;&lt;h2&gt;&#39; ).text( &#39;Enter details&#39; )
+	);
+
+	// Image
+	var imageProgress = new OO.ui.ProgressBarWidget();
+	var imageCancel = new OO.ui.ButtonWidget( {
+		icon: &#39;remove&#39;,
+		flags: &#39;destructive&#39;,
+		framed: false
+	} );
+	var imageSave = new OO.ui.ButtonWidget( {
+		label: &#39;Save&#39;,
+		flags: [ &#39;constructive&#39;, &#39;primary&#39; ]
+	} );
+	var imageToggle = new OO.ui.ToggleSwitchWidget();
+	var imageToggleLabel = new OO.ui.LabelWidget( { label: &#39;Bulk edit&#39; } );
+	$( &#39;.image_container&#39; ).append(
+		imageProgress.$element,
+		&#39;&lt;br&gt;&#39;,
+		imageCancel.$element,
+		imageSave.$element,
+		&#39;&lt;br&gt;&#39;,
+		imageToggle.$element,
+		imageToggleLabel.$element
+	);
+
+
+	// Details
+	var fileNameInput = new OO.ui.TextInputWidget( {
+		indicator: &#39;required&#39;,
+		required: true,
+		validate: /.+/
+	} );
+
+
+	var fileDateInput = new OO.ui.TextInputWidget( {
+		indicator: &#39;required&#39;,
+		required: true,
+		validate: /.+/
+	} );
+
+	var fileDescLang = new OO.ui.DropdownInputWidget( {
+		label: &#39;Pick langauge&#39;,
+		options: [
+			{ data: &#39;en&#39;, label: &#39;English&#39; },
+			{ data: &#39;hi&#39;, label: &#39;Hindi&#39; },
+		]
+	} );
+	var fileDescInput = new OO.ui.TextInputWidget( {
+		indicator: &#39;required&#39;,
+		required: true,
+		validate: /.+/,
+		multiline: true,
+		autosize: true
+	} );
+	var fileDescAdd = new OO.ui.ButtonWidget( {
+		label: &#39;Add another language&#39;,
+		icon: &#39;add&#39;,
+		flags: &#39;constructive&#39;,
+		framed: false
+	} );
+
+	var fileCatInput = new OO.ui.ComboBoxWidget( {
+		icon: &#39;tag&#39;,
+		label: &#39;Pick langauge&#39;,
+		menu: {
+			items: [
+				new OO.ui.MenuOptionWidget( {
+					data: &#39;wm-pres&#39;,
+					label: &#39;Wikimedia Presentation&#39;
+				} ),
+				new OO.ui.MenuOptionWidget( {
+					data: &#39;animals&#39;,
+					label: &#39;Wild Animals&#39;
+				} ),
+			]
+		}
+	} );
+
+	$( fileNameInput.$input )
+		.add( fileDateInput.$input )
+		.add( fileDescLang.$tabIndexed )
+		.add( fileDescInput.$input )
+		.add( fileCatInput.$input )
+		.on( &#39;focus&#39;, function() {
+			$( this ).closest( &#39;form&#39; ).removeClass( &#39;compact-form&#39; );
+		} ).on( &#39;blur&#39;, function () {
+			$( this ).closest( &#39;form&#39; ).addClass( &#39;compact-form&#39; );
+		} );
+
+
+	var fileFieldset = new OO.ui.FieldsetLayout( { label: &#39;Details&#39; } );
+	fileFieldset.addItems( [
+		new OO.ui.FieldLayout( fileNameInput, {
+			label: &#39;Name&#39;,
+			align: &#39;top&#39;
+		} ),
+
+		new OO.ui.FieldLayout( fileDateInput, {
+			label: &#39;Date created or first published&#39;,
+			align: &#39;top&#39;
+		} ),
+
+		new OO.ui.FieldLayout( fileDescLang, {
+			label: &#39;Description&#39;,
+			align: &#39;top&#39;
+		} ),
+		fileDescInput,
+		fileDescAdd,
+
+		new OO.ui.FieldLayout( fileCatInput, {
+			label: &#39;Categories&#39;,
+			align: &#39;top&#39;
+		} )
+	] );
+	var fileForm = new OO.ui.FormLayout( {
+		items: [ fileFieldset ]
+	} );
+
+	$( &#39;.details_container&#39; ).append( fileForm.$element );
+
+
+	// License
+	var ownerType = new OO.ui.ToggleSwitchWidget( { value: true } );
+	var ownerTypeLabel = new OO.ui.LabelWidget( { label: &#39;This file is my own work&#39; } );
+
+	var nameInput = new OO.ui.TextInputWidget( {
+		indicator: &#39;required&#39;,
+		required: true,
+		validate: /.+/,
+		classes: [ &#39;license_name_input&#39; ],
+		value: &#39;Prtksxna&#39;
+	} );
+	var licenseChoice = new OO.ui.ComboBoxWidget( {
+		icon: &#39;tag&#39;,
+		label: &#39;Pick a license&#39;,
+		classes: [ &#39;license_name_license&#39; ],
+		menu: {
+			items: [
+				new OO.ui.MenuOptionWidget( {
+					data: &#39;CC-BY-SA&#39;,
+					label: &#39;Creative Commons Attribution Share Alike&#39;
+				} ),
+				new OO.ui.MenuOptionWidget( {
+					data: &#39;CC-BY&#39;,
+					label: &#39;Creative Commons Attribution&#39;
+				} ),
+			]
+		}
+	} );
+
+	$( &#39;.license_container&#39; ).append(
+		ownerType.$element,
+		ownerTypeLabel.$element,
+		&#39;&lt;br&gt;&#39;,
+		&#39;&lt;br&gt;&#39;,
+		&#39;I&#39;,
+		nameInput.$element,
+		&#39;, the copyright holder of this work, irrevocably grant anyone the right to use this work under the&#39;,
+		licenseChoice.$element
+	);
+
+
+	// Done files
+	var doneLabel = new OO.ui.LabelWidget( { label: &#39;This file was successfully uploaded&#39; } );
+	var fileWikiUseLabel = new OO.ui.LabelWidget( { label: &#39;On wiki use&#39; } );
+	var fileWikiUseInput = new OO.ui.TextInputWidget( {
+		value: &#39;[[File: Hall.png]]&#39;
+	} );
+	var fileUseLabel = new OO.ui.LabelWidget( { label: &#39;Off wiki use&#39; } );
+	var fileUseInput = new OO.ui.TextInputWidget( {
+		value: &#39;http://upload.wikimedia.org/hall.png&#39;
+	} );
+
+	$( &#39;.done_file_container .usage_instructions&#39; ).append(
+		doneLabel.$element,
+		&#39;&lt;br&gt;&#39;,
+		&#39;&lt;br&gt;&#39;,
+		fileWikiUseLabel.$element,
+		fileWikiUseInput.$element,
+		&#39;&lt;br&gt;&#39;,
+		fileUseLabel.$element,
+		fileUseInput.$element
+	);
+} );
+</pre>
+</body>
+</html>
